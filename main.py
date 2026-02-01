@@ -1,37 +1,54 @@
 # main.py
 
-from data import employees
+from data import employees, departments
 
 
-# ------------------ PARSING ------------------
+# ------------------ PARSER ------------------
+
+def normalize(q):
+    return " ".join(q.replace("\n", " ").split())
+
 
 def parse_query(query):
-    query = " ".join(query.split())  # normalize whitespace
+    query = normalize(query)
 
     select_part, rest = query.split("FROM")
-    select_part = select_part.replace("SELECT", "").strip()
+    select_cols = [c.strip() for c in select_part.replace("SELECT", "").split(",")]
 
+    join_part = None
     where_part = None
-    group_by_part = None
+    group_by = None
 
     if "GROUP BY" in rest:
-        rest, group_by_part = rest.split("GROUP BY")
-        group_by_part = group_by_part.strip()
+        rest, group_by = rest.split("GROUP BY")
+        group_by = group_by.strip()
 
     if "WHERE" in rest:
-        from_part, where_part = rest.split("WHERE")
+        rest, where_part = rest.split("WHERE")
         where_part = where_part.strip()
-    else:
-        from_part = rest
 
-    columns = [c.strip() for c in select_part.split(",")]
-    table_name = from_part.strip()
+    if "JOIN" in rest:
+        from_part, join_part = rest.split("JOIN")
+        from_table = from_part.strip()
+
+        join_table, on_part = join_part.split("ON")
+        join_table = join_table.strip()
+        on_left, on_right = [x.strip() for x in on_part.split("=")]
+
+        join_part = {
+            "table": join_table,
+            "left": on_left,
+            "right": on_right,
+        }
+    else:
+        from_table = rest.strip()
 
     return {
-        "columns": columns,
-        "table": table_name,
+        "select": select_cols,
+        "from": from_table,
+        "join": join_part,
         "where": where_part,
-        "group_by": group_by_part,
+        "group_by": group_by,
     }
 
 
@@ -41,80 +58,105 @@ def apply_where(rows, condition):
     if not condition:
         return rows
 
-    column, value = condition.split("=")
-    column = column.strip()
+    if "IN (" in condition:
+        col, subquery = condition.split("IN")
+        col = col.strip()
+        subquery = subquery.strip()[1:-1]
+        values = execute_query(subquery)
+        values = {list(v.values())[0] for v in values}
+        return [r for r in rows if r[col] in values]
+
+    col, value = condition.split("=")
     value = value.strip().strip("'")
+    return [r for r in rows if str(r[col.strip()]) == value]
 
-    return [row for row in rows if str(row[column]) == value]
+
+# ------------------ JOIN ------------------
+
+def apply_join(left_rows, right_rows, left_key, right_key):
+    result = []
+    for l in left_rows:
+        for r in right_rows:
+            if l[left_key.split(".")[1]] == r[right_key.split(".")[1]]:
+                merged = {}
+                for k, v in l.items():
+                    merged[f"employees.{k}"] = v
+                for k, v in r.items():
+                    merged[f"departments.{k}"] = v
+                result.append(merged)
+    return result
 
 
-# ------------------ GROUP BY + AGGREGATION ------------------
+# ------------------ GROUP BY ------------------
 
 def apply_group_by(rows, group_col, select_cols):
     groups = {}
-
-    for row in rows:
-        key = row[group_col]
-        groups.setdefault(key, []).append(row)
+    for r in rows:
+        groups.setdefault(r[group_col], []).append(r)
 
     results = []
-
-    for key, group_rows in groups.items():
-        result = {group_col: key}
-
+    for key, group in groups.items():
+        row = {group_col: key}
         for col in select_cols:
             if col.startswith("COUNT"):
-                result[col] = len(group_rows)
-
+                row[col] = len(group)
             elif col.startswith("SUM"):
                 field = col[col.find("(")+1:col.find(")")]
-                result[col] = sum(r[field] for r in group_rows)
-
+                row[col] = sum(r[field] for r in group)
             elif col.startswith("AVG"):
                 field = col[col.find("(")+1:col.find(")")]
-                result[col] = sum(r[field] for r in group_rows) / len(group_rows)
-
-        results.append(result)
+                row[col] = sum(r[field] for r in group) / len(group)
+        results.append(row)
 
     return results
 
 
 # ------------------ EXECUTION ------------------
 
-def execute_query(query, data):
-    parsed = parse_query(query)
-    rows = data
+def execute_query(query):
+    q = parse_query(query)
 
-    rows = apply_where(rows, parsed["where"])
+    tables = {
+        "employees": employees,
+        "departments": departments,
+    }
 
-    if parsed["group_by"]:
-        return apply_group_by(rows, parsed["group_by"], parsed["columns"])
+    rows = tables[q["from"]]
 
-    # Simple SELECT
-    results = []
-    for row in rows:
-        result = {}
-        for col in parsed["columns"]:
-            result[col] = row[col]
-        results.append(result)
+    if q["join"]:
+        right_rows = tables[q["join"]["table"]]
+        rows = apply_join(
+            rows,
+            right_rows,
+            q["join"]["left"],
+            q["join"]["right"],
+        )
 
-    return results
+    rows = apply_where(rows, q["where"])
+
+    if q["group_by"]:
+        return apply_group_by(rows, q["group_by"], q["select"])
+
+    result = []
+    for r in rows:
+        row = {}
+        for c in q["select"]:
+            row[c] = r[c]
+        result.append(row)
+
+    return result
 
 
 # ------------------ MAIN ------------------
 
 def main():
     query = """
-    SELECT dept, COUNT(id), AVG(salary)
-    FROM employees
-    WHERE dept = 'IT'
-    GROUP BY dept
+    SELECT employees.name, departments.name
+    FROM employees JOIN departments
+    ON employees.dept = departments.id
     """
 
-    result = execute_query(query, employees)
-
-    print("Query Result:")
-    for row in result:
+    for row in execute_query(query):
         print(row)
 
 
