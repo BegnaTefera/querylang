@@ -14,7 +14,6 @@ The project demonstrates the core concepts of database systems — query parsing
 
 - **Abel Ataklti**
 - **Abreham Eneyew**
-- **Amanuel Fikremariam**
 - **Begna Tefera**
 - **Fitsum Girum**
 - **Omer Abdulaziz**
