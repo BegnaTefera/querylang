@@ -2,9 +2,47 @@
 
 
 
-QueryLang is a \*\*simple SQL-like query engine\*\* implemented in Python that executes queries directly on \*\*in-memory data structures\*\*.
+## Description
 
-The goal of this project is clarity and correctness rather than performance or full SQL compliance.
+QueryLang is a lightweight, Python-based SQL-like query engine designed to execute queries directly on in-memory data structures. It supports fundamental database operations such as SELECT, FROM, WHERE filters, JOINs, aggregation functions (COUNT, SUM, AVG), GROUP BY, and limited nested queries.
+
+The project demonstrates the core concepts of database systems — query parsing, logical execution, JOIN algorithms, aggregation, and nested query handling — in a simple and educational way. It is ideal for learning, experimentation, and building a foundation for more advanced query engines.
+
+---
+
+## Group Members
+
+- **Abel Ataklti**
+- **Abreham Eneyew**
+- **Amanuel Fikremariam**
+- **Begna Tefera**
+- **Fitsum Girum**
+- **Omer Abdulaziz**
+- **Zidan Nurhussen**
+
+---
+
+## Supported Features
+
+
+
+* `SELECT` specific columns
+
+* `FROM` a table (in-memory Python list of dictionaries)
+
+* `WHERE` simple equality conditions
+
+* `JOIN` (INNER JOIN with equality condition)
+
+* Aggregation functions:
+
+  - `COUNT(column)`
+  - `SUM(column)`
+  - `AVG(column)`
+
+* `GROUP BY`
+
+* **Limited nested queries** (subquery inside `WHERE IN`)
 
 
 
@@ -12,43 +50,11 @@ The goal of this project is clarity and correctness rather than performance or f
 
 
 
-\## Supported Features
+## Example Queries
 
 
 
-\* `SELECT` specific columns
-
-\* `FROM` a table (in-memory Python list of dictionaries)
-
-\* `WHERE` simple equality conditions
-
-\* `JOIN` (INNER JOIN with equality condition)
-
-\* Aggregation functions:
-
-
-
-&nbsp; \* `COUNT(column)`
-
-&nbsp; \* `SUM(column)`
-
-&nbsp; \* `AVG(column)`
-
-\* `GROUP BY`
-
-\* \*\*Limited nested queries\*\* (subquery inside `WHERE IN`)
-
-
-
----
-
-
-
-\## Example Queries
-
-
-
-\### Simple SELECT
+### Simple SELECT
 
 
 
@@ -64,7 +70,7 @@ WHERE dept = 'IT'
 
 
 
-\### GROUP BY with Aggregation
+### GROUP BY with Aggregation
 
 
 
@@ -80,7 +86,7 @@ GROUP BY dept
 
 
 
-\### JOIN Query
+### JOIN Query
 
 
 
@@ -96,7 +102,7 @@ ON employees.dept = departments.id
 
 
 
-\### Nested Query
+### Nested Query
 
 
 
@@ -124,11 +130,11 @@ WHERE dept IN (
 
 
 
-\## How It Works (High-Level)
+## How It Works (High-Level)
 
 
 
-1\. \*\*Parsing\*\*
+1. **Parsing**
 
 &nbsp;  The query string is split into logical components (`SELECT`, `FROM`, `JOIN`, `WHERE`, `GROUP BY`).
 
@@ -136,69 +142,34 @@ WHERE dept IN (
 
 
 
-2\. \*\*Execution Model\*\*
+1. **Execution Model**
 
-&nbsp;  QueryLang uses an \*\*interpreter-based execution model\*\*. The parsed query is executed directly on Python data structures without generating bytecode or machine code.
+&nbsp;  QueryLang uses an **interpreter-based execution model**. The parsed query is executed directly on Python data structures without generating bytecode or machine code.
 
 
 
-3\. \*\*Filtering (`WHERE`)\*\*
+1. **Filtering (`WHERE`)**
 
 &nbsp;  Rows are filtered early using simple equality predicates. Nested queries are executed first, and their results are reused in the outer query.
 
 
 
-4\. \*\*JOIN Processing\*\*
+1. **JOIN Processing**
 
-&nbsp;  JOINs are executed using a \*\*nested-loop join\*\* strategy, which is simple and suitable for in-memory datasets.
+&nbsp;  JOINs are executed using a **nested-loop join** strategy, which is simple and suitable for in-memory datasets.
 
 
 
-5\. \*\*Grouping \& Aggregation\*\*
+1. **Grouping & Aggregation**
 
 &nbsp;  When `GROUP BY` is present, rows are grouped using Python dictionaries and aggregate functions are computed per group.
 
 
-
 ---
 
 
 
-\## Design Decisions
-
-
-
-\* No external parser generators (ANTLR) were used to keep the learning curve low
-
-\* Interpreter execution was chosen over compilation for simplicity
-
-\* Data is stored entirely in memory for fast access and easy debugging
-
-
-
----
-
-
-
-\## Limitations
-
-
-
-\* Only equality conditions are supported in `WHERE`
-
-\* JOINs are limited to INNER JOINs
-
-\* Nested queries are limited to `IN (SELECT ...)`
-
-\* No cost-based optimization or indexing
-
-
-
----
-
-
-
-\## How to Run
+## How to Run
 
 
 
@@ -214,27 +185,25 @@ python main.py
 
 
 
-\## Educational Value
+## Educational Value
 
 
 
-This project demonstrates core \*\*database system concepts\*\*:
+This project demonstrates core **database system concepts**:
 
 
 
-\* Query parsing
+* Query parsing
 
-\* Logical query execution
+* Logical query execution
 
-\* JOIN algorithms
+* JOIN algorithms
 
-\* Aggregation
+* Aggregation
 
-\* Nested query handling
+* Nested query handling
 
-
-
-It serves as a foundation that can be extended with advanced parsing, optimization, and execution strategies.
-
-
-
+# Course Information
+Course: Compiler Design
+Year: 3rd Year
+Date: 2026-2-1
